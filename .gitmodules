@@ -12,7 +12,7 @@
 	branch = unstable
 [submodule "fw-qemu"]
 	path = fw-qemu
-	url = https://github.com/parsa-epfl/p-qemu.git
+	url = https://github.com/lorenzo-moni/cs-471-huot-moni-prunotto.git
 	branch = develop
 [submodule "bxdb"]
 	path = bxdb
