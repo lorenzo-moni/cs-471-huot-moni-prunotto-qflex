@@ -26,6 +26,10 @@ class QemuCommonArgParser:
         # TODO check why 53 : checked this is a check done to see whether or not we need to do checkpointing, with the assumption being it will usually be way less than the sampling interval
         if self.simulation_context.is_parallel:
             self.quantum_command = f'   -quantum size={self.simulation_context.quantum_size},check_period={int(self.simulation_context.quantum_size * check_period_quantum_coeff)} '
+        elif self.simulation_context.is_sequential:
+            # Sequential warming: one host thread runs the vCPUs in round-robin, each for one quantum per round,
+            # with the same timing model (core_info.csv) as the parallel mode.
+            self.quantum_command = f'   -quantum size={self.simulation_context.quantum_size},check_period={int(self.simulation_context.quantum_size * check_period_quantum_coeff)},rr=on '
         else:
             self.quantum_command = f'   -icount shift=0,align=off,sleep=off,q={self.simulation_context.quantum_size},check_period={int(self.simulation_context.quantum_size * check_period_quantum_coeff)} '
 
