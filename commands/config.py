@@ -105,6 +105,7 @@ class SimulationContext(BaseModel):
     qemu_nic: str = Field(description="type of NIC to use in QEMU")
     quantum_size: int = Field(description="quantum size for the simulator in nanoseconds")
     is_parallel: bool = Field(default=True, description="whether the simulation is parallel or not")
+    is_sequential: bool = Field(default=False, description="with is_parallel off, run all vCPUs on one host thread with the quantum timing model (-quantum rr=on) instead of -icount")
     check_period_quantum_coeff: float = Field(default=53.0, description="Coefficient to determine the check period based on quantum size")
     use_cd_rom: bool = Field(default=False, description="Whether to use a CD-ROM for initial setup.")
     machine_freq_ghz: float = Field(default=2.0, description="Frequency of the simulated cores in GHz, converts IPC to instructions per ns")
@@ -128,8 +129,11 @@ def create_simulation_context(
     check_period_quantum_coeff: float=53.0,
     use_cd_rom: bool=False,
     machine_freq_ghz: float=2.0,
+    is_sequential: bool=False,
 ) -> SimulationContext:
     l2_way = 16
+    if is_parallel and is_sequential:
+        raise ValueError("--sequential runs all vCPUs on one host thread: use it with --no-parallel.")
     if core_count not in MEMORY_CONTROLLER_POSITIONS:
         raise ValueError(f"Unsupported core count {core_count}. Supported: {', '.join(map(str, MEMORY_CONTROLLER_POSITIONS))}.")
     memory_controller_positions = MEMORY_CONTROLLER_POSITIONS[core_count]
@@ -149,6 +153,7 @@ def create_simulation_context(
         qemu_nic=network,
         quantum_size=quantum_size,
         is_parallel=is_parallel,
+        is_sequential=is_sequential,
         check_period_quantum_coeff=check_period_quantum_coeff,
         use_cd_rom=use_cd_rom,
         machine_freq_ghz=machine_freq_ghz,
@@ -441,6 +446,7 @@ def create_experiment_context(
     use_cd_rom: bool = False,
     machine_freq_ghz: float = 2.0,
     prebuilt_workload: str = "",
+    is_sequential: bool = False,
 ) -> ExperimentContext:
     # TODO check this to make sure it doesn't have edge cases
     working_folder = os.path.abspath(working_folder)
@@ -488,6 +494,7 @@ def create_experiment_context(
         check_period_quantum_coeff=check_period_quantum_coeff,
         use_cd_rom=use_cd_rom,
         machine_freq_ghz=machine_freq_ghz,
+        is_sequential=is_sequential,
     )
 
     workload = create_workload(

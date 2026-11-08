@@ -74,6 +74,10 @@ class ExperimentContextTyper(TyperDataClassMeta):
             help="Start from a prebuilt workload, e.g. 16c/dc (see ./qflex image list; download it with ./qflex image pull). "
                  "The first command copies its disk into the experiment's run folder; later commands reuse it. --loadvm-name defaults to base."
         )]="",
+        sequential: Annotated[bool, typer.Option(
+            help="Sequential warming: run all vCPUs in round-robin on one host thread, each for one quantum per round, "
+                 "with the same timing model as --parallel (-quantum ...,rr=on). Requires --no-parallel, which otherwise uses -icount."
+        )] = False,
     ):
         reject_removed_folder_options(mounting_folder, image_folder)
         print("quantum_size_ns:", quantum_size_ns)
@@ -102,5 +106,6 @@ class ExperimentContextTyper(TyperDataClassMeta):
             use_cd_rom=use_cd_rom,
             machine_freq_ghz=machine_freq_ghz,
             prebuilt_workload=prebuilt_workload,
+            is_sequential=sequential,
         )
         return experiment_context
