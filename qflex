@@ -105,6 +105,10 @@ def fw(
     sample_size: Annotated[int, typer.Option(
         help="Sample size for the workload."
     )]=30,
+    qstats_dir: Annotated[str, typer.Option(
+        help="Record the per-quantum host-time breakdown of fw-qemu (-quantum ...,stats=) in this folder of the run folder, e.g. qstats. "
+             "The folder is emptied before the run. Analyze it with scripts/qstats_analyze.py. Needs the parallel mode. Default: not recorded."
+    )]="",
 ):
     """
     This command performs functional warming of the simulator.
@@ -113,6 +117,7 @@ def fw(
     functional_warm_executor = FunctionalWarming(
         experiment_context=experiment_context,
         sample_size=sample_size,
+        qstats_dir=qstats_dir,
     )
     functional_warm_executor.execute(to_stdio=True, run_in_background=False)
 
