@@ -1,7 +1,6 @@
 import math
 import os
 import re
-import shlex
 
 from commands import Executor
 from .config import ExperimentContext
@@ -65,23 +64,17 @@ class FunctionalWarming(Executor):
         print("fw command:")
         print(fw_cmd)
         run_folder = f"{self.experiment_context.get_experiment_folder_address()}/run"
-        qstats_before, qstats_after = [], []
+        qstats_before = []
         if self.qstats_dir:
             # fw-qemu creates the folder but never deletes old files (e.g. host_<tid>.csv of a run
             # with more threads), which the analyzer would mix with the new ones.
             qstats_before = [f"rm -rf ./{self.qstats_dir}"]
-            qstats_after = ["echo " + shlex.quote(
-                f"qstats written to {run_folder}/{self.qstats_dir}, analyze it with: "
-                f"uv run python scripts/qstats_analyze.py {run_folder}/{self.qstats_dir} "
-                f"--statistics-final {run_folder}/statistics.final.csv"
-            )]
         return [
             f"cd {run_folder}",
             # Read by `result` to check that every requested checkpoint was simulated.
             f"echo {self.sample_size} > {FW_SAMPLE_SIZE_FILE}",
             *qstats_before,
             fw_cmd,
-            *qstats_after,
             # TODO add the proper conditions to only create log and fp_gen_speed at the right time
             "rm -rf fp_gen_speed",
             "mkdir fp_gen_speed",
