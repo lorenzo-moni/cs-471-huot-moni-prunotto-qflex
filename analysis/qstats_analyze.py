@@ -19,7 +19,8 @@ as the Cost of the PROPOSAL. All times in the files are host nanoseconds except
 
 Usage:
 scripts/qstats_analyze.py <run>/qstats [--json out.json] [--per-generation out.csv]
-                        [--skip-first-s 0.1] [--statistics-final <run>/statistics.final.csv]
+                        [--wfi-corr corr.csv] [--skip-first-s 0.1]
+                        [--statistics-final <run>/statistics.final.csv]
 """
 
 import argparse
@@ -519,6 +520,15 @@ def main():
         compute_per_generation(filtered_hosts, filtered_vcpu, q_ps).to_csv(
             args.per_generation
         )
+
+    if args.wfi_corr:
+        wfi = (
+            filtered_vcpu.pivot(index="generation", columns="cpu_idx", values="wfi_ps")
+            / q_ps
+        )
+        corr = wfi.corr()
+        corr.to_csv(args.wfi_corr)
+        print(f"WFI correlation matrix written to {args.wfi_corr}")
 
 
 if __name__ == "__main__":
