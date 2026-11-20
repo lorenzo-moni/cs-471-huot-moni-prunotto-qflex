@@ -23,9 +23,11 @@ class QemuCommonArgParser:
     
         check_period_quantum_coeff = self.simulation_context.check_period_quantum_coeff
         self.quantum_command = ''
+        # -quantum sub-options of the parallel mode; quantum_args() can append stats= to them.
+        self.parallel_quantum_opts = f'size={self.simulation_context.quantum_size},check_period={int(self.simulation_context.quantum_size * check_period_quantum_coeff)}'
         # TODO check why 53 : checked this is a check done to see whether or not we need to do checkpointing, with the assumption being it will usually be way less than the sampling interval
         if self.simulation_context.is_parallel:
-            self.quantum_command = f'   -quantum size={self.simulation_context.quantum_size},check_period={int(self.simulation_context.quantum_size * check_period_quantum_coeff)} '
+            self.quantum_command = f'   -quantum {self.parallel_quantum_opts} '
         elif self.simulation_context.is_sequential:
             # Sequential warming: one host thread runs the vCPUs in round-robin, each for one quantum per round,
             # with the same timing model (core_info.csv) as the parallel mode.
@@ -63,10 +65,19 @@ class QemuCommonArgParser:
         print(qemu_args)
         return qemu_args
 
-    def quantum_args(self) -> str:
+    def quantum_args(self, stats_dir: str = "") -> str:
+        """
+        stats_dir: record fw-qemu's per-quantum host-time breakdown (qstats, -quantum ...,stats=) in this
+        folder, relative to QEMU's working directory. Only the parallel mode records it.
+        """
+        quantum_command = self.quantum_command
+        if stats_dir:
+            if not self.simulation_context.is_parallel:
+                raise ValueError("qstats (-quantum stats=) needs the parallel mode: fw-qemu ignores it with rr=on, and -icount has no -quantum.")
+            quantum_command = f'   -quantum {self.parallel_quantum_opts},stats={stats_dir} '
         print("="*50+"Quantum command arguments:"+"="*50)
-        print(self.quantum_command)
-        return self.quantum_command
+        print(quantum_command)
+        return quantum_command
  
 
     
